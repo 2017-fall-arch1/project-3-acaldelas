@@ -1,20 +1,20 @@
-all: p2sw-demo.elf
-
-CPU             = msp430g2553
-CFLAGS          = -mmcu=${CPU} -Os -I../h
-LDFLAGS		= -L../lib -L/opt/ti/msp430_gcc/include/ 
+# makfile configuration
+CPU             	= msp430g2553
+CFLAGS          	= -mmcu=${CPU} -Os -I../h -I../h
+LDFLAGS	                = -L../lib -L/opt/ti/msp430_gcc/include/
 
 #switch the compiler (for the internal make rules)
 CC              = msp430-elf-gcc
-AS              = msp430-elf-as
-AR              = msp430-elf-ar
+AS              = msp430-elf-gcc -mmcu=${CPU} -c
 
-p2sw-demo.elf: p2sw-demo.o
-	$(CC) $(CFLAGS) ${LDFLAGS} -o $@ $^ -lLcd -lp2sw -lTimer
+all: pong_game.elf
 
-clean:
-	rm -f *.a *.o *.elf
+#additional rules for files
+pong_game.elf: ${COMMON_OBJECTS} pong_game.o wdt_handler.o buzzer.o
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ -lTimer -lLcd -lShape -lCircle -lp2sw
 
-load: p2sw-demo.elf
+load: pong_game.elf
 	mspdebug rf2500 "prog $^"
 
+clean:
+	rm -f *.o *.elf
