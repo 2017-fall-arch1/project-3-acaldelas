@@ -1,62 +1,42 @@
 #include <msp430.h>
-#include "libTimer.h"
-#include "switches.h"
 #include "buzzer.h"
-#include "led.h"
+static unsigned int period = 1000;
+static signed int rate = 200;	
+
+#define MIN_PERIOD 1000
+#define MAX_PERIOD 4000
 
 void buzzer_init()
 {
+    /* 
+       Direct timer A output "TA0.1" to P2.6.  
+        According to table 21 from data sheet:
+          P2SEL2.6, P2SEL2.7, anmd P2SEL.7 must be zero
+          P2SEL.6 must be 1
+        Also: P2.6 direction must be output
+    */
     timerAUpmode();		/* used to drive speaker */
     P2SEL2 &= ~(BIT6 | BIT7);
     P2SEL &= ~BIT7; 
     P2SEL |= BIT6;
     P2DIR = BIT6;		/* enable output to speaker (P2.6) */
 
-    //buzzer_set_period(1000);	/* start buzzing!!! */
-    makeSounds();
+    buzzer_advance_frequency();	/* start buzzing!!! */
+}
+
+void buzzer_advance_frequency() 
+{
+  period += rate;
+  if ((rate > 0 && (period > MAX_PERIOD)) || 
+      (rate < 0 && (period < MIN_PERIOD))) {
+    rate = -rate;
+    period += (rate << 1);
+  }
+  buzzer_set_period(period);
 }
 
 void buzzer_set_period(short cycles)
 {
   CCR0 = cycles; 
-  CCR1 = cycles >> 1;		/* one half cycle */
-}
-
-void makeSounds() { /* sounds are by string */
-  
-    if(btn1){
-      
-        buzzer_set_period(1408.18); //G0
-
-    }
-    else if(btn2){
-
-        buzzer_set_period(1879.69); //D0
-
-    }
-    else if(btn3){
-
-        buzzer_set_period(1254.55); //A0
-
-    }
-    else if(btn4){
-
-        buzzer_set_period(1674.62); //E0
-
-    }
-    else if (btn1 && btn2){
-
-        buzzer_set_period(1117.67); //B0
-
-    }
-    else if (btn2 && btn3){
-
-        buzzer_set_period(2109.89); //C0
-
-    }
-    else if (btn3 && btn4){
-
-        buzzer_set_period(1580.63); //F0
-
-    }
+  CCR1 = cycles >> 5;		/* one half cycle */
 }
